@@ -455,6 +455,22 @@ function bindEvent() {
         leaveRoom();
     });
 
+    $('#switchVideo').click(function () {
+      zg.switchDevice('video', $('#previewVideo')[0], $('#videoList').val(), ()=> {
+        console.warn('switch camera success')
+      }, err => {
+        console.err(err)
+      })
+    });
+
+    $('#switchAudio').click(function () {
+      zg.switchDevice('audio', $('#previewVideo')[0], $('#audioList').val(), ()=> {
+        console.warn('switch audio success')
+      }, err => {
+        console.err(err)
+      })
+    })
+
 
     //防止，暴力退出（关闭或刷新页面）--最新版本已经内部集成 不再需要
     // var isOnIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i);
