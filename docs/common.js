@@ -266,12 +266,14 @@ function doPreviewPublish(config) {
 
 //推流
 function publish() {
-    zg.startPublishingStream(_config.idName, previewVideo);
+    var videoCodeType = $('#videoCodeType').val();
+    zg.startPublishingStream(_config.idName, previewVideo, null, {videoDecodeType: videoCodeType ? videoCodeType : 'H264'});
 
 }
 
 function play(streamId, video) {
-    var result = zg.startPlayingStream(streamId, video);
+    var playVideoCodeType = $('#videoPlayCodeType').val()
+    var result = zg.startPlayingStream(streamId, video, null, {videoDecodeType: playVideoCodeType ? playVideoCodeType : 'H264'});
 
     video.muted = false;
     if (!result) {
