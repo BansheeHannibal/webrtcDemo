@@ -40,7 +40,9 @@ $(function () {
     // } else {
     //     alert('浏览器不支持webrtc，换一个浏览器试试吧');
     // }
-    bindEvent();
+    let detection = ZegoClient.isSupportDetection();
+
+    console.log(detection)
 
     desc()
 
