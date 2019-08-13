@@ -30,10 +30,9 @@ var anchor_userid = '', anchro_username = '';
 
 $(function () {
     console.log('sdk version is', ZegoClient.getCurrentVersion());
-
+    console.log(navigator && navigator.userAgent);
     ZegoClient.supportDetection(result => {
       console.log(result);
-      console.log(navigator && navigator.userAgent);
       bindEvent();
     }, err => {
       alert(err);
