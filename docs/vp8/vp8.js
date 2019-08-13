@@ -38,12 +38,12 @@ $(function () {
       alert(err);
     })
 
-    ZegoClient.supportVideoCodeType(function ({H264, VP8}) {
-        videoDecodeType = VP8 ? 'VP8' : (H264 ? 'H264' : null);
-        bindEvent();
-    }, function () {
-        alert('没有可用视频编码')
-    });
+    // ZegoClient.supportVideoCodeType(function ({H264, VP8}) {
+    //     videoDecodeType = VP8 ? 'VP8' : (H264 ? 'H264' : null);
+    //     bindEvent();
+    // }, function () {
+    //     alert('没有可用视频编码')
+    // });
 });
 
 function bindEvent() {
