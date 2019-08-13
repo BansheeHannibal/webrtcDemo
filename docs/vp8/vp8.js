@@ -33,7 +33,7 @@ $(function () {
 
     ZegoClient.supportDetection(result => {
       console.log(result);
-      console.log(navigator);
+      console.log(navigator && navigator.userAgent);
       bindEvent();
     }, err => {
       alert(err);
