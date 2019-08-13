@@ -260,7 +260,7 @@ function doPreviewPublish(config) {
     $('#previewLabel').html(_config.nickName);
     publish();
     //部分浏览器会有初次调用摄像头后才能拿到音频和视频设备label的情况，
-    if (!$('#videoList').val() && $('#videoList').val() != 0) {
+    if (!$('#videoList').val() && $('#videoList').val() == 0) {
       enumDevices();
     }
   }, function (err) {
