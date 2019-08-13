@@ -25,6 +25,7 @@ var zg,
   useLocalStreamList = [];
 var anchor_userid = '', anchro_username = '';
 
+document.addEventListener('deviceready', onDeviceReady, false);
 
 $(function () {
   console.log('sdk version is', ZegoClient.getCurrentVersion());
@@ -445,8 +446,6 @@ function init() {
 
 function bindEvent() {
   previewVideo = $('#previewVideo')[0];
-
-  document.addEventListener('deviceready', onDeviceReady, false);
 
   //初始化sdk
   init();
