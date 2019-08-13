@@ -31,6 +31,14 @@ var anchor_userid = '', anchro_username = '';
 $(function () {
     console.log('sdk version is', ZegoClient.getCurrentVersion());
 
+    ZegoClient.supportDetection(result => {
+      console.log(result);
+      console.log(navigator);
+      bindEvent();
+    }, err => {
+      alert(err);
+    })
+
     ZegoClient.supportVideoCodeType(function ({H264, VP8}) {
         videoDecodeType = VP8 ? 'VP8' : (H264 ? 'H264' : null);
         bindEvent();
