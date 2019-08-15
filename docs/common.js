@@ -259,7 +259,7 @@ function doPreviewPublish(config) {
     $('#previewLabel').html(_config.nickName);
     publish();
     //部分浏览器会有初次调用摄像头后才能拿到音频和视频设备label的情况，
-    if (!$('#videoList').val() && $('#videoList').val() != 0) {
+    if (!$('#videoList').val() && $('#videoList').val() == 0) {
       enumDevices();
     }
   }, function (err) {
@@ -467,7 +467,7 @@ function bindEvent() {
     zg.switchDevice('video', $('#previewVideo')[0], $('#videoList').val(), () => {
       console.warn('switch camera success')
     }, err => {
-      console.err(err)
+      console.error(err)
     })
   });
 
@@ -475,7 +475,7 @@ function bindEvent() {
     zg.switchDevice('audio', $('#previewVideo')[0], $('#audioList').val(), () => {
       console.warn('switch audio success')
     }, err => {
-      console.err(err)
+      console.error(err)
     })
   })
 
