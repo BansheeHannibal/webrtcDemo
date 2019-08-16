@@ -223,7 +223,11 @@
           ZegoClient.supportDetection( result => {
             this.webRTC = result.webRtc
             this.capture = result.capture
-            this.H264State = result.videoDecodeType.H264
+            if (this.isIosWexin() && result.videoDecodeType.H264) {
+              this.H264State = false
+            } else {
+              this.H264State = result.videoDecodeType.H264
+            }
             this.VP8State = result.videoDecodeType.VP8
           }, err => {
             console.error(err)
@@ -448,9 +452,12 @@
 
 
 
+      },
+
+      isIosWexin () {
+        let ua = navigator.userAgent.toLowerCase();
+        return ua.match(/MicroMessenger/i) == "micromessenger" && navigator.userAgent.match(/(iPhone|iPod|iPad);?/i)
       }
-
-
     }
   })
 </script>
