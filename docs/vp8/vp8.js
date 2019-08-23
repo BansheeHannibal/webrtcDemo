@@ -30,16 +30,13 @@ var anchor_userid = '', anchro_username = '';
 
 $(function () {
     console.log('sdk version is', ZegoClient.getCurrentVersion());
-    console.log(navigator && navigator.userAgent);
-    // ZegoClient.supportDetection(result => {
-    //   console.log(result);
-    //   bindEvent();
-    // }, err => {
-    //   alert(err);
-    // })
 
     ZegoClient.supportVideoCodeType(function ({H264, VP8}) {
         videoDecodeType = VP8 ? 'VP8' : (H264 ? 'H264' : null);
+        $("#videoCodeType option:eq(0)").val(videoDecodeType);
+
+        !H264 && $("#videoCodeType option:eq(1)").attr('disabled', "disabled");
+        !VP8 && $("#videoCodeType option:eq(2)").attr('disabled', "disabled");
         bindEvent();
     }, function () {
         alert('没有可用视频编码')
@@ -54,10 +51,16 @@ function bindEvent() {
 
     $('#createRoom').click(function () {
         zg.setUserStateUpdate(true);
+        if ($("#videoCodeType").val()) {
+            videoDecodeType = $("#videoCodeType").val();
+        }
         openRoom($('#roomId').val(), 1);
     });
 
     $('#openRoom').click(function () {
+        if ($("#videoCodeType").val()) {
+            videoDecodeType = $("#videoCodeType").val();
+        }
         openRoom($('#roomId').val(), 2);
     });
 
@@ -66,6 +69,16 @@ function bindEvent() {
         leaveRoom();
     });
 
+    $('#startLive').click(function () {
+        if ($("#videoCodeType").val()) {
+            videoDecodeType = $("#videoCodeType").val();
+        }
+        if (loginRoom) {
+            doPreviewPublish()
+        } else {
+            alert('请先点击进入房间')
+        }
+    })
 
     //防止，暴力退出（关闭或刷新页面）--最新版本已经内部集成 不再需要
     // var isOnIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i);
@@ -264,9 +277,14 @@ function listenChild() {
                         if (extraInfo.currentVideoCode !== videoDecodeType) {
                             streamId = extraInfo.MixStreamId;
                             extraInfo.currentVideoCode = videoDecodeType;
+                            setTimeout(function () {
+                                play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode);
+                            }, 2000);
+                        } else {
+                            play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode);
                         }
                     }
-                    play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode);
+
                 }
 
             } else if (type == 1) {
@@ -391,19 +409,21 @@ function publish() {
 
 
 function mixStream() {
+    var outputBitrate = $('#mixStreamBitrate').val();
     var streamList = [{
         streamId: _config.idName,
-        top: 3,
-        left: 3,
-        bottom: 320,
-        right: 240,
+        top: 0,
+        left: 0,
+        bottom: 640,
+        right: 480,
     }];
     var mixParam = {
         outputStreamId: _config.MixIdName,
-        outputBitrate: 300,
+        outputBitrate: outputBitrate ? outputBitrate * 1 : 800,
         outputFps: 15,
-        outputWidth: 240,
-        outputHeight: 320,
+        outputHeight: 640,
+        outputWidth: 480,
+        outputAudioConfig: videoDecodeType !== 'VP8' ? 3 : 0,
         streamList: streamList,
         extraParams: [{key: 'video_encode', value: videoDecodeType === 'VP8' ? 'h264' : 'vp8'}]
     };
@@ -445,10 +465,12 @@ function leaveRoom() {
     $('.chatBox-content-demo').html('');
     $('.chat-message-num').text(0)
     zg.logout();
+    loginRoom = false;
 }
 
 function play(streamId, video, videoCode) {
     playStreamList.push(streamId);
+    console.log('play:streamId, videoCode', streamId, videoCode)
     var result = zg.startPlayingStream(streamId, video, null, {videoDecodeType: videoCode});
 
     video.muted = false;
@@ -459,86 +481,3 @@ function play(streamId, video, videoCode) {
 
     }
 }
-
-function addCssByLink(url) {
-    var doc = document;
-    var link = doc.createElement("link");
-    link.setAttribute("rel", "stylesheet");
-    link.setAttribute("type", "text/css");
-    link.setAttribute("href", url);
-
-    var heads = doc.getElementsByTagName("head");
-    if (heads.length)
-        heads[0].appendChild(link);
-    else
-        doc.documentElement.appendChild(link);
-}
-
-function loadJs(url, callback) {
-    var script = document.createElement('script');
-    script.type = "text/javascript";
-    if (typeof (callback) != "undefined") {
-        if (script.readyState) {
-            script.onreadystatechange = function () {
-                if (script.readyState == "loaded" || script.readyState == "complete") {
-                    script.onreadystatechange = null;
-                    callback();
-                }
-            }
-        } else {
-            script.onload = function () {
-                callback();
-            }
-        }
-    }
-    script.src = url;
-    document.body.appendChild(script);
-}
-
-function desc() {
-    addCssByLink('../assets/desc.css');
-    loadJs('../assets/desc.js', function () {
-        var descAtag = document.createElement('a');
-        descAtag.setAttribute('id', 'descModule');
-        descAtag.setAttribute('role', 'button');
-        descAtag.setAttribute('tabindex', '0');
-        // descAtag.setAttribute('data-trigger', 'focus');
-        descAtag.setAttribute('data-toggle', 'popover');
-        descAtag.setAttribute('title', '调用说明');
-
-        var pageUrl = location.pathname.split('/');
-        pageUrl = pageUrl[pageUrl.length - 2];
-
-        var descArr = descObj[pageUrl] || [];
-        descAtag.setAttribute('data-content', descArr.join(`<br/><br/>`));
-
-        console.log(descObj);
-        document.getElementsByTagName('body')[0].appendChild(descAtag);
-
-        $('#descModule').popover({
-            html: true
-        })
-    })
-}
-
-// cordova test
-(function cordovaLoad() {
-    if (location.search && location.search.indexOf('platform=cordova') > -1) {
-        loadJs('../assets/cordova.js');
-        document.addEventListener('deviceready', function () {
-            var permissions = cordova.plugins.permissions;
-            permissions.checkPermission(permissions.CAMERA, function (status) {
-                if (status.hasPermission) {
-                    console.log("Yes :D ");
-                } else {
-                    permissions.requestPermissions([permissions.CAMERA, permissions.RECORD_AUDIO], function (status) {
-                        console.log("requestPermissions: ", status);
-                    }, function (err) {
-                        console.error("requestPermissions: ", err);
-                    })
-                    console.warn("No :( ");
-                }
-            });
-        }, false);
-    }
-})();
