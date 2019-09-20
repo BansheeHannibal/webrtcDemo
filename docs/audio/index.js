@@ -191,3 +191,13 @@ function play(streamId, video, extraInfo) {
     }
 }
 
+$('#voiceChange').click(() => {
+  zg.voiceChange($('#voicePitch').val() * 1, _config.idName);
+  $('#voicePitch').change(event => zg.voiceChange(event.target.value * 1, _config.idName));
+})
+
+$('#voiceBack').click(() => {
+  zg.voiceBack(_config.idName);
+  $('#voicePitch').unbind();
+})
+
