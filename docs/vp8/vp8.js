@@ -6,12 +6,11 @@ var zg,
         appid: appid * 1,
         idName: new Date().getTime() + '',
         nickName: 'u' + new Date().getTime(),
-        server: "wss://wsliveroom-alpha.zego.im:8282/ws",//"wss://wsliveroom-alpha.zego.im:8282/ws",
+        server: "wss://wssliveroom-test.zego.im/ws",//"wss://wsliveroom-alpha.zego.im:8282/ws",
         logLevel: 0,
         logUrl: "",
         remoteLogLevel: 0,
-        audienceCreateRoom: true,
-        testEnvironment: false,
+        audienceCreateRoom: true
     },
     _otherConfig = {
         cgi_token: '',
@@ -31,12 +30,19 @@ var anchor_userid = '', anchro_username = '';
 $(function () {
     console.log('sdk version is', ZegoClient.getCurrentVersion());
 
-    ZegoClient.supportVideoCodeType(function ({H264, VP8}) {
-        videoDecodeType = VP8 ? 'VP8' : (H264 ? 'H264' : null);
-        $("#videoCodeType option:eq(0)").val(videoDecodeType);
+    let ua = navigator.userAgent.toLowerCase();
+    isWeixin = ua.match(/MicroMessenger/i) == "micromessenger" && ua.match(/android/i)
+    isiOS = !!ua.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
 
-        !H264 && $("#videoCodeType option:eq(1)").attr('disabled', "disabled");
-        !VP8 && $("#videoCodeType option:eq(2)").attr('disabled', "disabled");
+    if (isiOS && isWeixin) {
+        $('#createRoom').attr('disabled', true)
+    }
+
+    ZegoClient.supportDetection(function (res) {
+        videoDecodeType = res.videoDecodeType.VP8 ? 'VP8' : (res.videoDecodeType.H264 ? 'H264' : null);
+        $("#videoCodeType option:eq(0)").val(videoDecodeType);
+        !res.videoDecodeType.H264 && $("#videoCodeType option:eq(1)").attr('disabled', "disabled");
+        !res.videoDecodeType.VP8 && $("#videoCodeType option:eq(2)").attr('disabled', "disabled");
         bindEvent();
     }, function () {
         alert('没有可用视频编码')
@@ -51,6 +57,7 @@ function bindEvent() {
 
     $('#createRoom').click(function () {
         zg.setUserStateUpdate(true);
+
         if ($("#videoCodeType").val()) {
             videoDecodeType = $("#videoCodeType").val();
         }
@@ -93,6 +100,10 @@ function bindEvent() {
 function init() {
 
     zg = new ZegoClient();
+
+    //内调测试用代码，客户请忽略  start
+    setConfig(zg);
+    //内调测试用代码，客户请忽略  end
 
     zg.config(_config);
     enumDevices();
@@ -227,7 +238,7 @@ function loginSuccess(streamList, type) {
                 extraInfo.currentVideoCode = videoDecodeType;
             }
         }
-        play(streamId, $('.remoteVideo video:eq(' + index + ')')[0], extraInfo.currentVideoCode);
+        play(streamId, $('.remoteVideo video:eq(' + index + ')')[0], extraInfo.currentVideoCode || $('#videoCodeType').val());
     }
     console.log(`login success`);
 
@@ -270,7 +281,7 @@ function listenChild() {
                     console.info(streamList[i].stream_id + ' was added');
                     useLocalStreamList.push(streamList[i]);
                     $('#memberList').append('<option value="' + streamList[i].anchor_id_name + '">' + streamList[i].anchor_nick_name + '</option>');
-                    $('.remoteVideo').append($('<video  autoplay muted playsinline></video>'));
+                    $('.remoteVideo').append($('<video  autoplay muted playsinline controls></video>'));
                     var extraInfo = streamList[i].extra_info, streamId = streamList[i].stream_id;
                     if (extraInfo) {
                         extraInfo = JSON.parse(extraInfo);
@@ -278,10 +289,10 @@ function listenChild() {
                             streamId = extraInfo.MixStreamId;
                             extraInfo.currentVideoCode = videoDecodeType;
                             setTimeout(function () {
-                                play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode);
+                                play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode || $('#videoCodeType').val());
                             }, 2000);
                         } else {
-                            play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode);
+                            play(streamId, $('.remoteVideo video:last-child')[0], extraInfo.currentVideoCode || $('#videoCodeType').val());
                         }
                     }
 
@@ -414,15 +425,15 @@ function mixStream() {
         streamId: _config.idName,
         top: 0,
         left: 0,
-        bottom: 640,
-        right: 480,
+        bottom: 480,
+        right: 640,
     }];
     var mixParam = {
         outputStreamId: _config.MixIdName,
-        outputBitrate: outputBitrate ? outputBitrate * 1 : 800,
+        outputBitrate: outputBitrate ? outputBitrate * 1 : 800 * 1000,
         outputFps: 15,
-        outputHeight: 640,
-        outputWidth: 480,
+        outputHeight: 480,
+        outputWidth: 640,
         outputAudioConfig: videoDecodeType !== 'VP8' ? 3 : 0,
         streamList: streamList,
         extraParams: [{key: 'video_encode', value: videoDecodeType === 'VP8' ? 'h264' : 'vp8'}]
@@ -480,4 +491,41 @@ function play(streamId, video, videoCode) {
         console.error("play " + el.nativeElement.id + " return " + result);
 
     }
+}
+
+function setConfig(zg) {
+    //测试用代码，客户请忽略  start
+    if (location.search && location.search.indexOf('appid')>-1) {
+        let _arr_config = location.search.substr(1).split('&');
+        _arr_config.forEach(function (item) {
+            var key = item.split('=')[0], value = item.split('=')[1];
+
+            if (value && _config.hasOwnProperty(key)) {
+                _config[key] = decodeURIComponent(value);
+            } else if (value && _otherConfig.hasOwnProperty(key)) {
+                _otherConfig[key] = decodeURIComponent(value);
+            }
+        });
+        appSigin = '';
+    }
+    //测试用代码，客户请忽略  end
+
+
+    console.log("config param:" + JSON.stringify(_config));
+
+    _config.appid = _config.appid * 1;
+    //_config.testEnvironment = !!(_config.testEnvironment * 1);
+
+    //测试用代码，客户请忽略  start
+    if (_otherConfig.signal) {
+        zg.setCustomSignalUrl(_otherConfig.signal);
+    }
+
+    if (_otherConfig.cgi_token && _otherConfig.token == 'https://wsliveroom-demo.zego.im:8282/token') {
+        $.get(_otherConfig.cgi_token, function (cgi_token) {
+            _otherConfig.cgi_token = cgi_token.data;
+            console.log(_otherConfig.cgi_token);
+        })
+    }
+    //测试用代码，客户请忽略  end
 }

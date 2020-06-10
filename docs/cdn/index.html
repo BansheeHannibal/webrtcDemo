@@ -72,6 +72,7 @@
           <button type="button" id="createRoom" class="btn btn-primary btn-sm">创建房间</button>
           <button type="button" id="openRoom" class="btn btn-primary btn-sm">进入房间(CDN拉流)</button>
           <button type="button" id="leaveRoom" class="btn btn-secondary btn-sm">退出</button>
+          <button type="button" id="playCDN" class="btn btn-secondary btn-sm">点击播放</button>
         </div>
       </div>
 
@@ -81,12 +82,24 @@
           <video id="previewVideo" autoplay muted playsinline></video>
         </div>
         <div class="col-sm remoteVideo">
-          <video id="test" autoplay muted playsinline></video>
+          <label class="text-white" style="display: block; position: absolute; z-index: 999;">test</label>
+          <video id="test" autoplay muted preload="auto"
+          x-webkit-airplay="true"
+          x5-video-player-type="h5-page"
+          webkit-playsinline="true"
+          controls
+          playsinline></video>
         </div>
       </div>
     </div>
   </div>
 </body>
+<script src="../assets/vconsole.min.js"></script>
+<script>
+  // init vConsole
+  var vConsole = new VConsole();
+  console.log('Hello world');
+</script>
 <script src="../assets/jquery-3.3.1.min.js"></script>
 <script src="../assets/popper.min.js"></script>
 <script src="../assets/bootstrap.min.js"></script>

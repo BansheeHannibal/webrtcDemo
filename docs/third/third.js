@@ -53,7 +53,7 @@ function loginSuccess(streamList, type) {
     // width: 1280,
     // height: 720,
     // frameRate: 20,
-    // bitRate: 1500
+    // bitRate: 1000
   }
   // config.externalMediaStream = mediastream
   // config.video = false;

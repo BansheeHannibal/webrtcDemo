@@ -1,11 +1,13 @@
 $(function (){
 
+  let isMixingAudio = false;
+
   let audioEffectList = [{
     effectId: 1,
     path: '../assets/laugh.mp3'
   }, {
     effectId: 2,
-    path: '../assets/aoisora.mp3',
+    path: '../assets/homage.m4a',
   }]
 
   $('#preloadEffect').click(() => {
@@ -24,8 +26,10 @@ $(function (){
       streamId: _config.idName,
       effectId: 1
     }, () => {
+      isMixingAudio = true;
       console.warn('start play')
     }, () => {
+      isMixingAudio = false;
       console.warn('play end')
     })
   })
@@ -34,7 +38,13 @@ $(function (){
 
   $('#playClapEffect').click(() => {
 
-    zg.startMixingAudio(_config.idName, $('#applaud')[0])
+    if (isMixingAudio) {
+      console.error("当前正在混其它音效,不要想鼓掌了");
+      return;
+    }
+
+    zg.startMixingAudio(_config.idName, $('#applaud')[0]) && ($('#pauseEffect')[0].disabled = true);
+
 
     // *****chrome和firfox在混音的时候，会有表现不一致的问题： chrome标签被混音，标签本身依旧能正常播放出声音，firfox则被静音；推流端一般静音 ******
     if(getBrowser()==='Chrome'){
@@ -44,9 +54,11 @@ $(function (){
 
 
     $('#applaud')[0].play()
+    isMixingAudio = true;
     $('#applaud').on('ended', () => {
       zg.stopMixingAudio(_config.idName)
-      $('#applaud').unbind()
+      $('#applaud').unbind();
+      $('#pauseEffect')[0].disabled = false;
     })
   })
 
@@ -55,8 +67,10 @@ $(function (){
       streamId: _config.idName,
       effectId: 2
     }, () => {
+      isMixingAudio = true;
       console.warn('start play')
     }, () => {
+      isMixingAudio = false;
       console.warn('play end')
     })
   })
@@ -71,6 +85,7 @@ $(function (){
 
   $('#stopEffect').click(() => {
     zg.stopMixingAudio(_config.idName)
+    isMixingAudio = false;
   })
 
   $('#unloadEffect').click(() => {
@@ -89,5 +104,53 @@ $(function (){
 
   $('#volume').on('input', () => {
     zg.setMixingAudioVolume(_config.idName, parseInt($('#volume').val()))
+  })
+
+  $('#leaveMixRoom').click(function () {
+    isMixingAudio && zg.stopMixingAudio(_config.idName);
+    isMixingAudio && $('#stopMixingBuffer').click();
+    isMixingAudio = false;
+    leaveRoom();
+  });
+
+  $('#mixingBuffer').click(function () {
+    let xhr  = new XMLHttpRequest();
+
+    xhr.open('GET', '../assets/tonight.m4a', true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload =  () => {
+
+      if(xhr.status == 200 || xhr.status == 304) {
+
+        let buffer = xhr.response;
+        zg.mixingBuffer(_config.idName, "1", buffer, err => {
+          if (err) {
+            console.error(err);
+          } else {
+            console.warn("real time effect success");
+            isMixingAudio = true;
+            $('#playClapEffect')[0].disabled = true;
+            $('#pauseEffect')[0].disabled = true;
+            $('#resumeEffect')[0].disabled = true;
+            $('#stopEffect')[0].disabled = true;
+          }
+        });
+      } else {
+        console.error(err)
+      }
+
+    }
+
+    xhr.send();
+
+  })
+
+  $('#stopMixingBuffer').click(function () {
+    zg.stopMixingBuffer(_config.idName, null);
+    isMixingAudio = false;
+    $('#playClapEffect')[0].disabled = false;
+    $('#pauseEffect')[0].disabled = false;
+    $('#resumeEffect')[0].disabled = false;
+    $('#stopEffect')[0].disabled = false;
   })
 })

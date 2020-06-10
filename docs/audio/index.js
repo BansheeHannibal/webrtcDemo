@@ -191,13 +191,26 @@ function play(streamId, video, extraInfo) {
     }
 }
 
-$('#voiceChange').click(() => {
-  zg.voiceChange($('#voicePitch').val() * 1, _config.idName);
-  $('#voicePitch').change(event => zg.voiceChange(event.target.value * 1, _config.idName));
+$('#startRecordAudio').click(() => {
+  ZegoClient.startRecord(null, {audio: true, audioInput: $('#audioList').val()}, err => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.warn('start record');
+    }
+  });
+
+  $('#stopRecordAudio')[0].disabled = false;
+  $('#startRecordAudio')[0].disabled = true;
 })
 
-$('#voiceBack').click(() => {
-  zg.voiceBack(_config.idName);
-  $('#voicePitch').unbind();
-})
+$('#stopRecordAudio').click(function () {
+  // ZegoClient.stopRecordAudio();
+  ZegoClient.stopRecord();
 
+  var audio = document.createElement('audio');
+  audio.src = ZegoClient.saveRecord();
+  audio.play();
+  $('#stopRecordAudio')[0].disabled = true;
+  $('#startRecordAudio')[0].disabled = false;
+});

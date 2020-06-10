@@ -1,4 +1,5 @@
 var role = null  //角色
+var notPlay = false;
 //覆盖index.js 中的init
 function init() {
   zg = new ZegoClient();
@@ -14,6 +15,41 @@ function init() {
 
   // 监听sdk回掉
   listen();
+
+  zg.onStreamUpdated = function (type, streamList) {
+    if (type == 0 && !notPlay) {
+        for (var i = 0; i < streamList.length; i++) {
+            console.info(streamList[i].stream_id + ' was added');
+            useLocalStreamList.push(streamList[i]);
+            $('#memberList').append('<option value="' + streamList[i].anchor_id_name + '">' + streamList[i].anchor_nick_name + '</option>');
+            $('.remoteVideo').append($('<video  autoplay muted playsinline controls></video>'));
+            play(streamList[i].stream_id, $('.remoteVideo video:last-child')[0]);
+        }
+
+    } else if (type == 1 && !notPlay) {
+
+        for (var k = 0; k < useLocalStreamList.length; k++) {
+
+            for (var j = 0; j < streamList.length; j++) {
+
+                if (useLocalStreamList[k].stream_id === streamList[j].stream_id) {
+
+                    zg.stopPlayingStream(useLocalStreamList[k].stream_id);
+
+                    console.info(useLocalStreamList[k].stream_id + 'was devared');
+
+                    useLocalStreamList.splice(k, 1);
+
+                    $('.remoteVideo video:eq(' + k + ')').remove();
+                    $('#memberList option:eq(' + k + ')').remove();
+
+                    break;
+                }
+            }
+        }
+    }
+
+}
 }
 
 function respondJoinLive(flag, requestId, fromUserId) {
@@ -108,11 +144,11 @@ function loginSuccess(streamList, type) {
   var maxNumber = ($('#maxPullNamber') && $('#maxPullNamber').val()) || 4
 
   //限制房间最多人数，原因：视频软解码消耗cpu，浏览器之间能支撑的个数会有差异，太多会卡顿
-  if (streamList.length >= maxNumber) {
-    alert('房间太拥挤，换一个吧！');
-    leaveRoom();
-    return;
-  }
+  // if (streamList.length >= maxNumber) {
+  //   alert('房间太拥挤，换一个吧！');
+  //   leaveRoom();
+  //   return;
+  // }
   if ($('#streamID').val()) {
     useLocalStreamList = [{
       anchor_id_name: 'custom',
@@ -123,14 +159,16 @@ function loginSuccess(streamList, type) {
     useLocalStreamList = streamList;
   }
 
-
-  $('.remoteVideo').html('');
-  $('#memberList').html('');
-  for (var index = 0; index < useLocalStreamList.length; index++) {
-    $('.remoteVideo').append($('<video  autoplay muted playsinline controls></video>'));
-    $('#memberList').append('<option value="' + useLocalStreamList[index].anchor_id_name + '">' + useLocalStreamList[index].anchor_nick_name + '</option>');
-    play(useLocalStreamList[index].stream_id, $('.remoteVideo video:eq(' + index + ')')[0]);
+  if (!notPlay) {
+    $('.remoteVideo').html('');
+    $('#memberList').html('');
+    for (var index = 0; index < useLocalStreamList.length; index++) {
+      $('.remoteVideo').append($('<video  autoplay muted playsinline controls></video>'));
+      $('#memberList').append('<option value="' + useLocalStreamList[index].anchor_id_name + '">' + useLocalStreamList[index].anchor_nick_name + '</option>');
+      play(useLocalStreamList[index].stream_id, $('.remoteVideo video:eq(' + index + ')')[0]);
+    }
   }
+
   console.log(`login success`);
 
   loginRoom = true;
@@ -168,6 +206,11 @@ function leaveRoom() {
 
 
 $(function () {
+  $('#createButNotPlay').click(function () {
+        notPlay = true;
+        $('#createRoom').click();
+  })
+
   $('#requestJoinLive').click(function () {
     anchor_userid && zg.requestJoinLive(anchor_userid, function (seq) {
       console.log('requestJoinLive suc', seq);
